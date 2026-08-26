@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ckb" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>سیستەمی پەنجەمۆری دەمووچاو</title>
+    <style>
+        body { font-family: Tahoma, sans-serif; text-align: center; background-color: #f4f4f9; padding: 20px; }
+        #video { width: 100%; max-width: 400px; border-radius: 10px; border: 2px solid #333; }
+        button { padding: 12px 25px; font-size: 16px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; margin-top: 15px; }
+        #result { margin-top: 20px; font-weight: bold; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+    <h2>سیستەمی ئۆنڵایینی پەنجەمۆری کارمەند پێ بە دەمووچاو</h2>
+    <video id="video" autoplay playsinline></video><br>
+    <button onclick="capture()">تۆمارکردنی ئامادەبوون</button>
+    <div id="result"></div>
+
+    <script>
+        const video = document.getElementById('video');
+
+        // پێدانی ڕێگەپێدان بە کەمێرا
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => video.srcObject = stream)
+            .catch(err => alert("تکایە ڕێگە بە بەکارهێنانی کەمێرا بدە."));
+
+        function capture() {
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            
+            const imageData = canvas.toDataURL('image/jpeg');
+            document.getElementById('result').innerText = "لە پرۆسەسدایە...";
+
+            fetch('/scan', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ image: imageData })
+            })
+            .then(res => res.json())
+            .then(data => {
+                document.getElementById('result').innerText = data.message;
+                document.getElementById('result').style.color = data.status === 'success' ? 'green' : 'red';
+            });
+        }
+    </script>
+</body>
+</html>
